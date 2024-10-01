@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -18,7 +17,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
@@ -43,16 +42,10 @@ public class UserController {
         return userService.updateUser(id, user);
     }
 
-    @PutMapping("/{id}/grant-admin-role")
-    public Mono<User> grantAdminRole(@PathVariable UUID id, @RequestHeader("X-User-Id") String superUserId) {
-        return userService.grantAdminRole(id);
-    }
-
     @DeleteMapping("/{id}")
     public Mono<Void> deleteUser(@PathVariable UUID id) {
         return userService.deleteUser(id);
     }
-
 
 
     @GetMapping

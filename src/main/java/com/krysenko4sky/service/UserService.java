@@ -14,8 +14,6 @@ public interface UserService {
 
     Mono<User> getUserById(UUID id);
 
-    Mono<User> grantAdminRole(UUID userId);
-
     Mono<User> updateUser(UUID id, User user);
 
     Mono<Void> deleteUser(UUID id);
