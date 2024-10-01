@@ -1,0 +1,60 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.4'
+	id 'io.spring.dependency-management' version '1.1.6'
+	id "com.github.ben-manes.versions" version '0.46.0'
+}
+
+group = 'com.krysenko4sky'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	// dependency versions
+	springBootVersion = '3.3.4'
+	projectreactorVersion = '3.6.10'
+	lombokVersion= '1.18.34'
+}
+
+dependencies {
+	implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-data-r2dbc:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-data-jdbc:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
+	implementation "io.projectreactor:reactor-core:${projectreactorVersion}"
+
+	implementation 'org.postgresql:postgresql:42.7.4'
+	implementation 'org.postgresql:r2dbc-postgresql:1.0.5.RELEASE'
+	implementation 'org.liquibase:liquibase-core:4.27.0'
+
+	compileOnly 'org.projectlombok:lombok:${lombokVersion}'
+	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+	developmentOnly "org.springframework.boot:spring-boot-docker-compose:${springBootVersion}"
+
+	testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+	testImplementation "io.projectreactor:reactor-test:${projectreactorVersion}"
+	testImplementation 'org.springframework.security:spring-security-test:6.3.3'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher1.10.3'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
