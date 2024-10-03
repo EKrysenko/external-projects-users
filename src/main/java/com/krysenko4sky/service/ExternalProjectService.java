@@ -1,19 +1,22 @@
 package com.krysenko4sky.service;
 
-import com.krysenko4sky.model.ExternalProject;
+import com.krysenko4sky.model.dto.ExternalProjectDto;
+import com.krysenko4sky.model.dto.UserDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 public interface ExternalProjectService {
-    Mono<ExternalProject> createExternalProject(ExternalProject project);
+    Mono<ExternalProjectDto> createExternalProject(ExternalProjectDto project);
 
-    Mono<ExternalProject> getExternalProjectById(UUID id);
+    Mono<ExternalProjectDto> getExternalProjectById(UUID id);
 
-    Mono<ExternalProject> updateExternalProject(UUID id, ExternalProject project);
+    Mono<ExternalProjectDto> updateExternalProject(UUID id, ExternalProjectDto project);
 
     Mono<Void> deleteExternalProject(UUID id);
 
-    Flux<ExternalProject> getExternalProjectsByUserId(UUID userId);
+    Flux<ExternalProjectDto> getExternalProjectsByUserId(UUID userId);
+
+    Flux<ExternalProjectDto> getAllExternalProjects();
 }

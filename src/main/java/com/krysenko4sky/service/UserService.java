@@ -1,6 +1,7 @@
 package com.krysenko4sky.service;
 
-import com.krysenko4sky.model.User;
+import com.krysenko4sky.model.dto.UserDto;
+import com.krysenko4sky.model.dto.InsecureUserDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -10,13 +11,15 @@ public interface UserService {
 
     Mono<Boolean> authenticate(String email, String password);
 
-    Mono<User> createUser(User user);
+    Mono<UserDto> createUser(InsecureUserDto user);
 
-    Mono<User> getUserById(UUID id);
+    Mono<UserDto> getUserById(UUID id);
 
-    Mono<User> updateUser(UUID id, User user);
+    Mono<UserDto> updateUser(UUID id, UserDto user);
+
+    Mono<UserDto> updateUserPassword(UUID id, InsecureUserDto user);
 
     Mono<Void> deleteUser(UUID id);
 
-    Flux<User> getAllUsers();
+    Flux<UserDto> getAllUsers();
 }

@@ -1,10 +1,16 @@
 package com.krysenko4sky.controller;
 
-import com.krysenko4sky.model.ExternalProject;
+import com.krysenko4sky.model.dto.ExternalProjectDto;
+import com.krysenko4sky.model.dto.UserDto;
 import com.krysenko4sky.service.ExternalProjectService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/external-projects")
 public class ExternalProjectController {
 
@@ -28,27 +35,36 @@ public class ExternalProjectController {
     }
 
     @PostMapping
-    public Mono<ExternalProject> createExternalProject(@RequestBody ExternalProject project) {
+    public Mono<ExternalProjectDto> createExternalProject(@Valid @RequestBody ExternalProjectDto project) {
         return externalProjectService.createExternalProject(project);
     }
 
     @GetMapping("/{id}")
-    public Mono<ExternalProject> getExternalProjectById(@PathVariable UUID id) {
+    @Cacheable(value = "external-projects", key = "#id")
+    public Mono<ExternalProjectDto> getExternalProjectById(@PathVariable UUID id) {
         return externalProjectService.getExternalProjectById(id);
     }
 
     @PutMapping("/{id}")
-    public Mono<ExternalProject> updateExternalProject(@PathVariable UUID id, @RequestBody ExternalProject project) {
+    @CacheEvict(value = "external-projects", key = "#id")
+    public Mono<ExternalProjectDto> updateExternalProject(@PathVariable UUID id, @Valid @RequestBody ExternalProjectDto project) {
         return externalProjectService.updateExternalProject(id, project);
     }
 
     @DeleteMapping("/{id}")
+    @CacheEvict(value = "external-projects", key = "#id")
     public Mono<Void> deleteExternalProject(@PathVariable UUID id) {
         return externalProjectService.deleteExternalProject(id);
     }
 
     @GetMapping("/user/{userId}")
-    public Flux<ExternalProject> getExternalProjectsByUserId(@PathVariable UUID userId) {
+    @Cacheable(value = "external-projects-by-user", key = "#userId")
+    public Flux<ExternalProjectDto> getExternalProjectsByUserId(@PathVariable UUID userId) {
         return externalProjectService.getExternalProjectsByUserId(userId);
+    }
+
+    @GetMapping
+    public Flux<ExternalProjectDto> getAllUsers() {
+        return externalProjectService.getAllExternalProjects();
     }
 }

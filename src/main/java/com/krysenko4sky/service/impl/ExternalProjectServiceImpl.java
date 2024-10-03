@@ -1,7 +1,10 @@
 package com.krysenko4sky.service.impl;
 
-import com.krysenko4sky.model.ExternalProject;
+import com.google.common.base.Preconditions;
+import com.krysenko4sky.model.dto.ExternalProjectDto;
+import com.krysenko4sky.model.mapper.ExternalProjectMapper;
 import com.krysenko4sky.repository.ExternalProjectRepository;
+import com.krysenko4sky.repository.UserRepository;
 import com.krysenko4sky.service.ExternalProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,29 +17,38 @@ import java.util.UUID;
 public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     private final ExternalProjectRepository externalProjectRepository;
+    private final ExternalProjectMapper externalProjectMapper;
+    private final UserRepository userRepository;
 
     @Autowired
-    public ExternalProjectServiceImpl(ExternalProjectRepository externalProjectRepository) {
+    public ExternalProjectServiceImpl(ExternalProjectRepository externalProjectRepository, UserRepository userRepository,
+                                      ExternalProjectMapper externalProjectMapper) {
         this.externalProjectRepository = externalProjectRepository;
+        this.userRepository = userRepository;
+        this.externalProjectMapper = externalProjectMapper;
     }
 
     @Override
-    public Mono<ExternalProject> createExternalProject(ExternalProject project) {
-        return externalProjectRepository.save(project);
+    public Mono<ExternalProjectDto> createExternalProject(ExternalProjectDto dto) {
+        Preconditions.checkArgument(dto.getId() == null, "Field 'id' must be empty");
+        return externalProjectRepository.save(externalProjectMapper.toDao(dto))
+                .map(externalProjectMapper::toDto);
     }
 
     @Override
-    public Mono<ExternalProject> getExternalProjectById(UUID id) {
-        return externalProjectRepository.findById(id);
+    public Mono<ExternalProjectDto> getExternalProjectById(UUID id) {
+        return externalProjectRepository.findById(id).map(externalProjectMapper::toDto);
     }
 
     @Override
-    public Mono<ExternalProject> updateExternalProject(UUID id, ExternalProject project) {
-        return externalProjectRepository.findById(id)
-                .flatMap(existingProject -> {
-                    existingProject.setName(project.getName());
-                    return externalProjectRepository.save(existingProject);
-                });
+    public Mono<ExternalProjectDto> updateExternalProject(UUID id, ExternalProjectDto dto) {
+        Preconditions.checkArgument(dto.getId() == id, "id in path and in dto must be the same");
+        return userRepository.findById(dto.getUserId())
+                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
+                .then(externalProjectRepository.findById(id)
+                        .switchIfEmpty(Mono.error(new RuntimeException("project not found")))
+                        .flatMap(existingProject -> externalProjectRepository.save(externalProjectMapper.toDao(dto)))
+                        .map(externalProjectMapper::toDto));
     }
 
     @Override
@@ -45,7 +57,12 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
     }
 
     @Override
-    public Flux<ExternalProject> getExternalProjectsByUserId(UUID userId) {
-        return externalProjectRepository.findByUserId(userId);
+    public Flux<ExternalProjectDto> getExternalProjectsByUserId(UUID userId) {
+        return externalProjectRepository.findByUserId(userId).map(externalProjectMapper::toDto);
+    }
+
+    @Override
+    public Flux<ExternalProjectDto> getAllExternalProjects() {
+        return externalProjectRepository.findAll().map(externalProjectMapper::toDto);
     }
 }

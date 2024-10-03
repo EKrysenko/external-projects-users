@@ -1,4 +1,4 @@
-package com.krysenko4sky.model;
+package com.krysenko4sky.model.dao;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

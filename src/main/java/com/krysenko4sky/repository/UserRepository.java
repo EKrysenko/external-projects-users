@@ -1,6 +1,6 @@
 package com.krysenko4sky.repository;
 
-import com.krysenko4sky.model.User;
+import com.krysenko4sky.model.dao.User;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;

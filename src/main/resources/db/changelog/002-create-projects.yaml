@@ -4,7 +4,7 @@ databaseChangeLog:
       author: "user"
       changes:
         - createTable:
-            tableName: "projects"
+            tableName: "external_projects"
             columns:
               - column:
                   name: "id"
@@ -24,8 +24,8 @@ databaseChangeLog:
                   constraints:
                     nullable: true
         - addForeignKeyConstraint:
-            baseTableName: "projects"
+            baseTableName: "external_projects"
             baseColumnNames: "user_id"
             referencedTableName: "users"
             referencedColumnNames: "id"
-            constraintName: "fk_projects_users"
+            constraintName: "fk_external_projects_users"
