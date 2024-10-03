@@ -1,6 +1,11 @@
 package com.krysenko4sky.service.impl;
 
-import com.krysenko4sky.model.User;
+import com.google.common.base.Preconditions;
+import com.krysenko4sky.model.dao.User;
+import com.krysenko4sky.model.dto.InsecureUserDto;
+import com.krysenko4sky.model.dto.UserDto;
+import com.krysenko4sky.model.mapper.UserMapper;
+import com.krysenko4sky.repository.ExternalProjectRepository;
 import com.krysenko4sky.repository.UserRepository;
 import com.krysenko4sky.service.PasswordService;
 import com.krysenko4sky.service.UserService;
@@ -15,51 +20,76 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final ExternalProjectRepository externalProjectRepository;
     private final PasswordService passwordService;
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordService passwordService) {
+    public UserServiceImpl(UserRepository userRepository, ExternalProjectRepository externalProjectRepository, PasswordService passwordService, UserMapper userMapper) {
         this.userRepository = userRepository;
+        this.externalProjectRepository = externalProjectRepository;
         this.passwordService = passwordService;
+        this.userMapper = userMapper;
     }
 
     @Override
     public Mono<Boolean> authenticate(String email, String password) {
         return userRepository.findByEmail(email)
+                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
                 .map(user -> passwordService.checkPassword(password, user.getPassword()))
                 .defaultIfEmpty(false);
     }
 
     @Override
-    public Mono<User> createUser(User user) {
-        String hashedPassword = passwordService.hashPassword(user.getPassword());
-        user.setPassword(hashedPassword);
-        return userRepository.save(user);
+    public Mono<UserDto> createUser(InsecureUserDto dto) {
+        Preconditions.checkArgument(dto.getId() == null, "Field 'id' must be empty");
+        User dao = userMapper.toDao(dto);
+        dao.setPassword(passwordService.hashPassword(dto.getPassword()));
+        return userRepository.save(dao).map(userMapper::toDto);
     }
 
     @Override
-    public Mono<User> getUserById(UUID id) {
-        return userRepository.findById(id);
+    public Mono<UserDto> getUserById(UUID id) {
+        return userRepository.findById(id).map(userMapper::toDto);
     }
 
     @Override
-    public Mono<User> updateUser(UUID id, User user) {
+    public Mono<UserDto> updateUser(UUID id, UserDto dto) {
+        Preconditions.checkArgument(dto.getId() == id, "id in path and in dto must be the same");
         return userRepository.findById(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
                 .flatMap(existingUser -> {
-                    existingUser.setEmail(user.getEmail());
-                    existingUser.setPassword(user.getPassword());
-                    existingUser.setUsername(user.getUsername());
-                    return userRepository.save(existingUser);
+                    existingUser.setEmail(dto.getEmail());
+                    existingUser.setUsername(dto.getUsername());
+                    return userRepository.save(existingUser)
+                            .map(userMapper::toDto);
+                });
+    }
+
+    @Override
+    public Mono<UserDto> updateUserPassword(UUID id, InsecureUserDto dto) {
+        Preconditions.checkArgument(dto.getId() == id, "id in path and in dto must be the same");
+        return userRepository.findById(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
+                .flatMap(existingUser -> {
+                    if (passwordService.checkPassword(dto.getPassword(), existingUser.getPassword())) {
+                        throw new IllegalArgumentException("New password cannot be same as old");
+                    }
+                    existingUser.setPassword(passwordService.hashPassword(dto.getPassword()));
+                    return userRepository.save(existingUser)
+                            .map(userMapper::toDto);
                 });
     }
 
     @Override
     public Mono<Void> deleteUser(UUID id) {
-        return userRepository.deleteById(id);
+        return externalProjectRepository.findByUserId(id)
+                .flatMap(project -> externalProjectRepository.deleteById(project.getId()))
+                .then(userRepository.deleteById(id));
     }
 
     @Override
-    public Flux<User> getAllUsers() {
-        return userRepository.findAll();
+    public Flux<UserDto> getAllUsers() {
+        return userRepository.findAll().map(userMapper::toDto);
     }
 }

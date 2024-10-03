@@ -1,6 +1,6 @@
 package com.krysenko4sky.repository;
 
-import com.krysenko4sky.model.ExternalProject;
+import com.krysenko4sky.model.dao.ExternalProject;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
