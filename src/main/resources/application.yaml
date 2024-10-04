@@ -13,10 +13,7 @@ spring:
     swagger-ui:
       path: /swagger-ui.html
 
-#logging:
-#  level:
-#    org.springframework: DEBUG    # Логи для Spring R2DBC
-#    io.r2dbc.postgresql: DEBUG          # Логи для драйвера PostgreSQL
-#    org.springframework.data.r2dbc: DEBUG # Логи для Spring Data R2DBC
-#    reactor: DEBUG                      # Логи для реактивного фреймворка Reactor
-#    org.springframework.transaction: TRACE # Логи для транзакций (если нужно)
+logging:
+  level:
+    org.springframework.cache: TRACE
+    org.springframework.cache.interceptor.CacheInterceptor: TRACE

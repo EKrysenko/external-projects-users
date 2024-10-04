@@ -2,7 +2,7 @@ package com.krysenko4sky.service.impl;
 
 import com.google.common.base.Preconditions;
 import com.krysenko4sky.model.dto.ExternalProjectDto;
-import com.krysenko4sky.model.mapper.ExternalProjectMapper;
+import com.krysenko4sky.mapper.ExternalProjectMapper;
 import com.krysenko4sky.repository.ExternalProjectRepository;
 import com.krysenko4sky.repository.UserRepository;
 import com.krysenko4sky.service.ExternalProjectService;
@@ -42,7 +42,13 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     @Override
     public Mono<ExternalProjectDto> updateExternalProject(UUID id, ExternalProjectDto dto) {
-        Preconditions.checkArgument(dto.getId() == id, "id in path and in dto must be the same");
+        Preconditions.checkArgument(dto.getId().equals(id), "id in path and in dto must be the same");
+        if (dto.getUserId() == null) {
+           return externalProjectRepository.findById(id)
+                    .switchIfEmpty(Mono.error(new RuntimeException("project not found")))
+                    .flatMap(existingProject -> externalProjectRepository.save(externalProjectMapper.toDao(dto)))
+                    .map(externalProjectMapper::toDto);
+        }
         return userRepository.findById(dto.getUserId())
                 .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
                 .then(externalProjectRepository.findById(id)

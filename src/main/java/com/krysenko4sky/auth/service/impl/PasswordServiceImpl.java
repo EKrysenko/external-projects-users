@@ -1,6 +1,6 @@
-package com.krysenko4sky.service.impl;
+package com.krysenko4sky.auth.service.impl;
 
-import com.krysenko4sky.service.PasswordService;
+import com.krysenko4sky.auth.service.PasswordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     @Override
-    public boolean checkPassword(String plainPassword, String hashedPassword) {
+    public boolean isPasswordCorrect(String plainPassword, String hashedPassword) {
         return encoder.matches(plainPassword, hashedPassword);
     }
 }
