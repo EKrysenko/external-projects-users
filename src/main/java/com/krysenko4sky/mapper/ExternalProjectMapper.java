@@ -1,4 +1,4 @@
-package com.krysenko4sky.model.mapper;
+package com.krysenko4sky.mapper;
 
 import com.krysenko4sky.model.dao.ExternalProject;
 import com.krysenko4sky.model.dto.ExternalProjectDto;

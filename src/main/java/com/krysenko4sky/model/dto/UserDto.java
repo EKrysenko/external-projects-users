@@ -1,15 +1,14 @@
 package com.krysenko4sky.model.dto;
 
-import jakarta.validation.constraints.Email;
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.UUID;
 
 @Data
+@Builder
 public class UserDto {
 
     private UUID id;
-    @Email(message = "invalid email")
-    private String email;
     private String username;
 }
