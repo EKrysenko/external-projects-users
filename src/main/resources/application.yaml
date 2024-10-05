@@ -1,12 +1,23 @@
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/testdb
+    url: r2dbc:postgresql://${DB_HOST:localhost}:5432/testdb
     username: user
     password: password
   liquibase:
-    url: jdbc:postgresql://localhost:5432/testdb
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/testdb
     user: user
     password: password
+  cloud:
+    vault:
+      uri: http://${VAULT_HOST:localhost}:8200
+      token: root
+      kv:
+        enabled: true
+        backend: secret
+        default-context: jwt-signing
+  config:
+    import: optional:vault://
+
   doc:
     api-docs:
       path: /v3/api-docs
@@ -15,5 +26,4 @@ spring:
 
 logging:
   level:
-    org.springframework.cache: TRACE
-    org.springframework.cache.interceptor.CacheInterceptor: TRACE
+    com.krysenko4sky: DEBUG
