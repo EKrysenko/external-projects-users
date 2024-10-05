@@ -3,6 +3,7 @@ package com.krysenko4sky.controller;
 import com.krysenko4sky.model.dto.UserDto;
 import com.krysenko4sky.service.UserService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -23,12 +24,17 @@ import java.util.UUID;
 
 @RestController
 @Validated
-@RequestMapping("/users")
+@Slf4j
+@RequestMapping(UserController.USERS)
 public class UserController {
+    public static final String USERS = "/users";
+    public static final String LOG_PATTERN = "URL '{}' invoke '{}' method";
 
+    public static final String BY_ID = "/{id}";
     private static final String USERS_CACHE = "users";
     private static final String ID_KEY = "#id";
     private static final String ALL_USERS_KEY = "'allUsers'";
+
     private final UserService userService;
 
     @Autowired
@@ -39,36 +45,45 @@ public class UserController {
     @PostMapping
     @CacheEvict(value = USERS_CACHE, key = ALL_USERS_KEY)
     public Mono<UserDto> createUser(@Valid @RequestBody UserDto user) {
+        logMethodInvoked(USERS, "createUser");
         return userService.createUser(user);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(BY_ID)
     @Cacheable(value = USERS_CACHE, key = ID_KEY)
     public Mono<UserDto> getUserById(@PathVariable UUID id) {
+        logMethodInvoked(USERS + BY_ID, "getUser");
         return userService.getUserById(id);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(BY_ID)
     @Caching(evict = {
             @CacheEvict(value = USERS_CACHE, key = ID_KEY),
             @CacheEvict(value = USERS_CACHE, key = ALL_USERS_KEY)
     })
     public Mono<UserDto> updateUser(@PathVariable UUID id, @Valid @RequestBody UserDto user) {
+        logMethodInvoked(USERS + BY_ID, "updateUser");
         return userService.updateUser(id, user);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(BY_ID)
     @Caching(evict = {
             @CacheEvict(value = USERS_CACHE, key = ID_KEY),
             @CacheEvict(value = USERS_CACHE, key = ALL_USERS_KEY)
     })
     public Mono<Void> deleteUser(@PathVariable UUID id) {
+        logMethodInvoked(USERS + BY_ID, "deleteUser");
         return userService.deleteUser(id);
     }
 
     @GetMapping
     @Cacheable(value = USERS_CACHE, key = ALL_USERS_KEY)
     public Flux<UserDto> getAllUsers() {
+        logMethodInvoked(USERS, "getAllUsers");
         return userService.getAllUsers();
+    }
+
+    private static void logMethodInvoked(String path, String method) {
+        log.debug(LOG_PATTERN, path, method);
     }
 }

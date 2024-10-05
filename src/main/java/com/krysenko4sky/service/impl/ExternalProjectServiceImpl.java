@@ -1,8 +1,10 @@
 package com.krysenko4sky.service.impl;
 
 import com.google.common.base.Preconditions;
-import com.krysenko4sky.model.dto.ExternalProjectDto;
+import com.krysenko4sky.exception.ProjectNotFoundException;
+import com.krysenko4sky.exception.UserNotFoundException;
 import com.krysenko4sky.mapper.ExternalProjectMapper;
+import com.krysenko4sky.model.dto.ExternalProjectDto;
 import com.krysenko4sky.repository.ExternalProjectRepository;
 import com.krysenko4sky.repository.UserRepository;
 import com.krysenko4sky.service.ExternalProjectService;
@@ -43,16 +45,17 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
     @Override
     public Mono<ExternalProjectDto> updateExternalProject(UUID id, ExternalProjectDto dto) {
         Preconditions.checkArgument(dto.getId().equals(id), "id in path and in dto must be the same");
-        if (dto.getUserId() == null) {
-           return externalProjectRepository.findById(id)
-                    .switchIfEmpty(Mono.error(new RuntimeException("project not found")))
+        UUID userId = dto.getUserId();
+        if (userId == null) {
+            return externalProjectRepository.findById(id)
+                    .switchIfEmpty(Mono.error(new ProjectNotFoundException(id)))
                     .flatMap(existingProject -> externalProjectRepository.save(externalProjectMapper.toDao(dto)))
                     .map(externalProjectMapper::toDto);
         }
-        return userRepository.findById(dto.getUserId())
-                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException(userId)))
                 .then(externalProjectRepository.findById(id)
-                        .switchIfEmpty(Mono.error(new RuntimeException("project not found")))
+                        .switchIfEmpty(Mono.error(new ProjectNotFoundException(id)))
                         .flatMap(existingProject -> externalProjectRepository.save(externalProjectMapper.toDao(dto)))
                         .map(externalProjectMapper::toDto));
     }

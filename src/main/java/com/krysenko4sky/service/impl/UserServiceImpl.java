@@ -1,6 +1,7 @@
 package com.krysenko4sky.service.impl;
 
 import com.google.common.base.Preconditions;
+import com.krysenko4sky.exception.UserNotFoundException;
 import com.krysenko4sky.mapper.UserMapper;
 import com.krysenko4sky.model.dao.User;
 import com.krysenko4sky.model.dto.UserDto;
@@ -44,7 +45,7 @@ public class UserServiceImpl implements UserService {
     public Mono<UserDto> updateUser(UUID id, UserDto dto) {
         Preconditions.checkArgument(dto.getId().equals(id), "id in path and in dto must be the same");
         return userRepository.findById(id)
-                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
+                .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
                 .flatMap(existingUser -> {
                     existingUser.setUsername(dto.getUsername());
                     return userRepository.save(existingUser)

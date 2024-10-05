@@ -9,6 +9,8 @@ public interface TokenValidator {
 
     Boolean isValid(String token, String username);
 
+    Boolean isValid(String token);
+
     Boolean isTokenExpired(String token);
 
     String extractLogin(String token);

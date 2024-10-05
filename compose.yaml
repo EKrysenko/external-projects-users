@@ -1,15 +1,76 @@
 version: '3.8'
 services:
+# vault
+  vault:
+    container_name: vault
+    image: hashicorp/vault:latest
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root"
+      VAULT_ADDR: "http://127.0.0.1:8200"
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - default
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:15672" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+#vault add secrets on startup
+  vault-prepopulate:
+      image: alpine/curl
+      depends_on:
+        - vault
+      volumes:
+        - ./init-vault.sh:/usr/local/bin/init-vault.sh
+      command: [ "sh", "-c", "apk add --no-cache openssl && /usr/local/bin/init-vault.sh" ]
+      networks:
+        - default
+#postgres
   postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: testdb
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d testdb" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    networks:
+      - default
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+# main app
+  main_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      VAULT_HOST: vault
+    ports:
+      - "8080:8080"
+    networks:
+      - default
+    depends_on:
+      vault-prepopulate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_started
+
+# networks, volumes etc.
+networks:
+  default:
+    name: vaultnetwork
+    driver: bridge
 
 volumes:
   postgres_data:

@@ -4,16 +4,22 @@ import com.krysenko4sky.auth.model.dao.UserDetails;
 import com.krysenko4sky.auth.model.dto.AuthRequestDto;
 import com.krysenko4sky.auth.model.dto.RegisterUserRequestDto;
 import com.krysenko4sky.auth.repository.UserDetailsRepository;
-import com.krysenko4sky.auth.service.TokenProvider;
 import com.krysenko4sky.auth.service.PasswordService;
+import com.krysenko4sky.auth.service.TokenProvider;
 import com.krysenko4sky.auth.service.UserDetailsService;
+import com.krysenko4sky.exception.IncorrectPasswordException;
+import com.krysenko4sky.exception.InvalidTokenException;
+import com.krysenko4sky.exception.RefreshTokenExpiredException;
+import com.krysenko4sky.exception.UserNotFoundException;
 import com.krysenko4sky.service.TokenValidator;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
@@ -49,38 +55,42 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public Mono<String> login(AuthRequestDto authRequestDto) {
-        return userDetailsRepository.findByEmail(authRequestDto.getLogin())
-                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
+        String login = authRequestDto.getLogin();
+        return userDetailsRepository.findByEmail(login)
+                .switchIfEmpty(Mono.error(new UserNotFoundException(login)))
                 .flatMap(
-                userDetails -> {
-                    boolean isPasswordCorrect = passwordService.isPasswordCorrect(authRequestDto.getPassword(), userDetails.getPassword());
-                    if (isPasswordCorrect) {
-                        userDetails.setRefreshToken(tokenProvider.generateRefreshToken(userDetails.getEmail()));
-                        return userDetailsRepository.save(userDetails)
-                                .map(savedUser -> tokenProvider.generateToken(authRequestDto.getLogin())); // Возвращаем access токен
-                    } else {
-                        return Mono.error(new IllegalArgumentException("wrong password"));
-                    }
-                }
-        );
+                        userDetails -> {
+                            boolean isPasswordCorrect = passwordService.isPasswordCorrect(authRequestDto.getPassword(), userDetails.getPassword());
+                            if (isPasswordCorrect) {
+                                userDetails.setRefreshToken(tokenProvider.generateRefreshToken(userDetails.getEmail()));
+                                return userDetailsRepository.save(userDetails)
+                                        .map(savedUser -> tokenProvider.generateToken(login));
+                            } else {
+                                log.debug("Incorrect password for user: {}", login);
+                                return Mono.error(new IncorrectPasswordException());
+                            }
+                        }
+                );
     }
 
     @Override
     public Mono<String> refreshAccessToken(String accessToken) {
         String login = tokenValidator.extractLogin(accessToken);
         return userDetailsRepository.findByEmail(login)
-                .switchIfEmpty(Mono.error(new RuntimeException("user not found")))
+                .switchIfEmpty(Mono.error(new UserNotFoundException(login)))
                 .flatMap(
-                userDetails -> {
-                    if (tokenValidator.isValid(accessToken, login)) {
-                        if (!tokenValidator.isTokenExpired(userDetails.getRefreshToken())) {
-                            return Mono.just(tokenProvider.generateToken(login));
-                        } else {
-                            return Mono.error(new IllegalStateException("Refresh token expired"));
-                        }
-                    } else {
-                        return Mono.error(new IllegalArgumentException("token not valid"));
-                    }
-                });
+                        userDetails -> {
+                            if (tokenValidator.isValid(accessToken, login)) {
+                                if (!tokenValidator.isTokenExpired(userDetails.getRefreshToken())) {
+                                    return Mono.just(tokenProvider.generateToken(login));
+                                } else {
+                                    log.debug("Refresh token expired for user: {}", login);
+                                    return Mono.error(new RefreshTokenExpiredException());
+                                }
+                            } else {
+                                log.error("Invalid token for user: {}", login);
+                                return Mono.error(new InvalidTokenException());
+                            }
+                        });
     }
 }

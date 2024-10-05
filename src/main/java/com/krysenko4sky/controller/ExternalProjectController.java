@@ -3,6 +3,7 @@ package com.krysenko4sky.controller;
 import com.krysenko4sky.model.dto.ExternalProjectDto;
 import com.krysenko4sky.service.ExternalProjectService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,14 +22,20 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+import static com.krysenko4sky.controller.UserController.LOG_PATTERN;
+
 @RestController
 @Validated
-@RequestMapping("/external-projects")
+@Slf4j
+@RequestMapping(ExternalProjectController.PROJECTS)
 public class ExternalProjectController {
 
     private static final String EXTERNAL_PROJECTS_CACHE = "external-projects";
     private static final String ID_KEY = "#id";
     private static final String ALL_PROJECTS_KEY = "'allProjects'";
+    public static final String PROJECTS = "/external-projects";
+    public static final String BY_USER_ID = "/user/{userId}";
+    public static final String BY_ID = "/{id}";
     private final ExternalProjectService externalProjectService;
 
     @Autowired
@@ -39,40 +46,51 @@ public class ExternalProjectController {
     @PostMapping
     @CacheEvict(value = EXTERNAL_PROJECTS_CACHE, key = ALL_PROJECTS_KEY)
     public Mono<ExternalProjectDto> createExternalProject(@Valid @RequestBody ExternalProjectDto project) {
+        logMethodInvoked(PROJECTS, "createExternalProject");
         return externalProjectService.createExternalProject(project);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(BY_ID)
     @Cacheable(value = EXTERNAL_PROJECTS_CACHE, key = ID_KEY)
     public Mono<ExternalProjectDto> getExternalProjectById(@PathVariable UUID id) {
+        logMethodInvoked(PROJECTS + BY_ID, "getExternalProjectById");
         return externalProjectService.getExternalProjectById(id);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(BY_ID)
     @Caching(evict = {
             @CacheEvict(value = EXTERNAL_PROJECTS_CACHE, key = ID_KEY),
             @CacheEvict(value = EXTERNAL_PROJECTS_CACHE, key = ALL_PROJECTS_KEY)
-    })    public Mono<ExternalProjectDto> updateExternalProject(@PathVariable UUID id, @Valid @RequestBody ExternalProjectDto project) {
+    })
+    public Mono<ExternalProjectDto> updateExternalProject(@PathVariable UUID id, @Valid @RequestBody ExternalProjectDto project) {
+        logMethodInvoked(PROJECTS + BY_ID, "updateExternalProject");
         return externalProjectService.updateExternalProject(id, project);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(BY_ID)
     @Caching(evict = {
             @CacheEvict(value = EXTERNAL_PROJECTS_CACHE, key = ID_KEY),
             @CacheEvict(value = EXTERNAL_PROJECTS_CACHE, key = ALL_PROJECTS_KEY)
     })
     public Mono<Void> deleteExternalProject(@PathVariable UUID id) {
+        logMethodInvoked(PROJECTS + BY_ID, "deleteExternalProject");
         return externalProjectService.deleteExternalProject(id);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping(BY_USER_ID)
     public Flux<ExternalProjectDto> getExternalProjectsByUserId(@PathVariable UUID userId) {
+        logMethodInvoked(PROJECTS + BY_USER_ID, "getExternalProjectsByUserId");
         return externalProjectService.getExternalProjectsByUserId(userId);
     }
 
     @GetMapping
     @Cacheable(value = EXTERNAL_PROJECTS_CACHE, key = ALL_PROJECTS_KEY)
-    public Flux<ExternalProjectDto> getAllUsers() {
+    public Flux<ExternalProjectDto> getAllProjects() {
+        logMethodInvoked(PROJECTS, "getAllUsers");
         return externalProjectService.getAllExternalProjects();
+    }
+
+    private static void logMethodInvoked(String path, String method) {
+        log.debug(LOG_PATTERN, path, method);
     }
 }
