@@ -1,64 +1,68 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.3.4'
-	id 'io.spring.dependency-management' version '1.1.6'
-	id "com.github.ben-manes.versions" version '0.51.0'
-	id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id "com.github.ben-manes.versions" version '0.51.0'
+    id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
 group = 'com.krysenko4sky'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 ext {
-	// dependency versions
-	springBootVersion = '3.3.4'
-	projectreactorVersion = '3.6.10'
-	lombokVersion= '1.18.34'
+    // dependency versions
+    springBootVersion = '3.3.4'
+    projectreactorVersion = '3.6.10'
+    lombokVersion = '1.18.34'
+    mockitoVersion = '5.14.1'
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.cloud:spring-cloud-starter-vault-config:4.1.3'
+    implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-data-r2dbc:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-cache:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
+    implementation 'org.springframework.cloud:spring-cloud-starter-vault-config:4.1.3'
 
-	implementation 'io.jsonwebtoken:jjwt:0.12.6'
+    implementation 'io.jsonwebtoken:jjwt:0.12.6'
 
-	implementation 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
-	implementation 'org.postgresql:postgresql'
-	implementation "org.liquibase:liquibase-core:4.29.2"
-	implementation "io.r2dbc:r2dbc-postgresql"
-	implementation 'org.mapstruct:mapstruct:1.6.2'
+    implementation 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
+    implementation 'org.postgresql:postgresql'
+    implementation "org.liquibase:liquibase-core:4.29.2"
+    implementation "io.r2dbc:r2dbc-postgresql"
+    implementation 'org.mapstruct:mapstruct:1.6.2'
 
-	implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.6.0'
-	implementation 'com.google.guava:guava:33.3.1-jre'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.6.0'
+    implementation 'com.google.guava:guava:33.3.1-jre'
 
-	compileOnly "org.projectlombok:lombok:${lombokVersion}"
-	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.2'
 
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'io.projectreactor:reactor-test'
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
+    testImplementation "io.projectreactor:reactor-test:${projectreactorVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.2'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

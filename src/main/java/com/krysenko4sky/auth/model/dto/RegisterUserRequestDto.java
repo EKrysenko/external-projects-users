@@ -3,9 +3,11 @@ package com.krysenko4sky.auth.model.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class RegisterUserRequestDto {
     @Email(message = "Login must be a valid email")
     private String login;
