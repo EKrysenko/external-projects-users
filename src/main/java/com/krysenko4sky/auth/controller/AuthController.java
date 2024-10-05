@@ -4,6 +4,7 @@ import com.krysenko4sky.auth.model.dto.AuthRequestDto;
 import com.krysenko4sky.auth.model.dto.RegisterUserRequestDto;
 import com.krysenko4sky.auth.service.UserDetailsService;
 import jakarta.validation.Valid;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,6 +34,11 @@ public class AuthController {
     @PostMapping("/login")
     public Mono<String> login(@RequestBody AuthRequestDto authRequestDto) {
         return userDetailsService.login(authRequestDto);
+    }
+
+    @PostMapping("/refresh")
+    public Mono<String> refresh(@RequestBody String accessToken) {
+        return userDetailsService.refreshAccessToken(accessToken);
     }
 
 }

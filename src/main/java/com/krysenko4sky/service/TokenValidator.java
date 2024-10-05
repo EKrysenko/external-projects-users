@@ -1,15 +1,13 @@
-package com.krysenko4sky.auth.service;
+package com.krysenko4sky.service;
 
 import io.jsonwebtoken.Claims;
 
+import java.util.List;
 import java.util.function.Function;
 
-public interface JwtUtilService {
+public interface TokenValidator {
 
-
-    String generateToken(String username);
-
-    Boolean validateToken(String token, String username);
+    Boolean isValid(String token, String username);
 
     Boolean isTokenExpired(String token);
 
@@ -18,4 +16,6 @@ public interface JwtUtilService {
     <T> T extractClaim(String token, Function<Claims, T> claimsResolver);
 
     Claims extractAllClaims(String token);
+
+    List<String> extractRoles(String jwt);
 }

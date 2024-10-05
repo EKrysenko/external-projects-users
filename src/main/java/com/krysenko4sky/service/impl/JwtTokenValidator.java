@@ -1,35 +1,25 @@
-package com.krysenko4sky.auth.service.impl;
+package com.krysenko4sky.service.impl;
 
-import com.krysenko4sky.auth.service.JwtUtilService;
+import com.krysenko4sky.service.TokenValidator;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
-
-import static java.util.concurrent.TimeUnit.HOURS;
+import java.util.stream.Collectors;
 
 @Service
-public class JwtUtilServiceImpl implements JwtUtilService {
+public class JwtTokenValidator implements TokenValidator {
 
     private static final String SECRET_KEY = "secret";
 
     @Override
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + HOURS.toMillis(10)))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .compact();
-    }
-
-    @Override
-    public Boolean validateToken(String token, String username) {
+    public Boolean isValid(String token, String username) {
         final String extractedUsername = extractLogin(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
+        return (extractedUsername.equals(username));
     }
 
     @Override
@@ -40,6 +30,21 @@ public class JwtUtilServiceImpl implements JwtUtilService {
     @Override
     public String extractLogin(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    @Override
+    public List<String> extractRoles(String token) {
+        return extractClaim(token, claims -> {
+            Object rolesObject = claims.get("roles");
+            if (rolesObject instanceof List<?> rolesList) {
+                if (rolesList.stream().allMatch(item -> item instanceof String)) {
+                    return rolesList.stream()
+                            .map(item -> (String) item)
+                            .collect(Collectors.toList());
+                }
+            }
+            return Collections.emptyList();
+        });
     }
 
     @Override
