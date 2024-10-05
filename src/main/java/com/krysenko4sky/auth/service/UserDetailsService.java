@@ -1,6 +1,5 @@
 package com.krysenko4sky.auth.service;
 
-import com.krysenko4sky.auth.model.dao.UserDetails;
 import com.krysenko4sky.auth.model.dto.AuthRequestDto;
 import com.krysenko4sky.auth.model.dto.RegisterUserRequestDto;
 import jakarta.validation.Valid;
@@ -12,5 +11,5 @@ public interface UserDetailsService {
 
     Mono<String> login(AuthRequestDto authRequestDto);
 
-    Mono<UserDetails> getUserDetailsByLogin(String login);
+    Mono<String> refreshAccessToken(String accessToken);
 }

@@ -15,4 +15,5 @@ public class UserDetails {
     private UUID id;
     private String email;
     private String password;
+    private String refreshToken;
 }
