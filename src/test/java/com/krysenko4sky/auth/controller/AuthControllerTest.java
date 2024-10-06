@@ -5,7 +5,14 @@ import com.krysenko4sky.auth.model.dto.RefreshTokenRequestDto;
 import com.krysenko4sky.auth.model.dto.RegisterUserRequestDto;
 import com.krysenko4sky.auth.service.UserDetailsService;
 import com.krysenko4sky.controller.TestSecurityConfig;
+import com.krysenko4sky.exception.IncorrectPasswordException;
+import com.krysenko4sky.exception.InvalidTokenException;
+import com.krysenko4sky.exception.RefreshTokenExpiredException;
+import com.krysenko4sky.exception.UserNotFoundException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -16,7 +23,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @WebFluxTest(AuthController.class)
 @Import(TestSecurityConfig.class)
@@ -28,12 +37,23 @@ class AuthControllerTest {
     @MockBean
     private UserDetailsService userDetailsService;
 
-    private final RegisterUserRequestDto registerUserRequestDto = RegisterUserRequestDto.builder().login("test@example.com").password("123Yy!1234").build();
-    private final AuthRequestDto authRequestDto = AuthRequestDto.builder().login("testuser").password("password").build();
-    private final RefreshTokenRequestDto refreshTokenRequestDto = new RefreshTokenRequestDto("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJldmdlbml5LmtyeXNlbmtvQHlhbmRleC5ydSIsImlhdCI6MTcyODE0MjEwMiwiZXhwIjoxNzI4MTQyNzAyfQ.rM7TsOJmf_B6IOMnIcUMedIpYwy8d3VPNMz2jo5t-e8");
+    private final RegisterUserRequestDto registerUserRequestDto = RegisterUserRequestDto.builder()
+            .login("test@example.com")
+            .password("123Yy!1234")
+            .build();
+    private final AuthRequestDto authRequestDto = AuthRequestDto.builder()
+            .login("testuser")
+            .password("password")
+            .build();
+    private final RefreshTokenRequestDto refreshTokenRequestDto = new RefreshTokenRequestDto("validRefreshToken");
+
+    @AfterEach
+    public void cleanMocks() {
+        Mockito.reset(userDetailsService);
+    }
 
     @Test
-    void testRegisterUser() {
+    void testRegisterUser_Success() {
         Mockito.when(userDetailsService.register(any(RegisterUserRequestDto.class)))
                 .thenReturn(Mono.just(ResponseEntity.ok("User registered successfully")));
 
@@ -52,7 +72,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testLogin() {
+    void testLogin_Success() {
         Mockito.when(userDetailsService.login(any(AuthRequestDto.class)))
                 .thenReturn(Mono.just("mockJwtToken"));
 
@@ -71,7 +91,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testRefreshToken() {
+    void testRefreshToken_Success() {
         Mockito.when(userDetailsService.refreshAccessToken(any(String.class)))
                 .thenReturn(Mono.just("newMockJwtToken"));
 
@@ -87,5 +107,91 @@ class AuthControllerTest {
                 });
 
         Mockito.verify(userDetailsService).refreshAccessToken(any(String.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "password",
+            "short1!",
+            "NoDigit!",
+            "12345678",
+            "onlylowercase1!",
+            "ONLYUPPERCASE1!",
+    })
+    void testRegisterUser_PasswordValidation(String password) {
+        registerUserRequestDto.setPassword(password);
+
+        webTestClient.post().uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(registerUserRequestDto)
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    void testRegisterUser_InvalidEmail() {
+        registerUserRequestDto.setLogin("invalid-email");
+
+        webTestClient.post().uri("/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(registerUserRequestDto)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void testLogin_IncorrectPassword() {
+        when(userDetailsService.login(any(AuthRequestDto.class)))
+                .thenReturn(Mono.error(new IncorrectPasswordException()));
+
+        webTestClient.post().uri("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authRequestDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody(String.class)
+                .value(response -> assertEquals("Incorrect password", response));
+    }
+
+    @Test
+    void testLogin_UserNotFound() {
+        when(userDetailsService.login(any(AuthRequestDto.class)))
+                .thenReturn(Mono.error(new UserNotFoundException(authRequestDto.getLogin())));
+
+        webTestClient.post().uri("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authRequestDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody(String.class)
+                .value(response -> assertEquals("User with login: 'testuser' not exist.", response));
+    }
+
+    @Test
+    void testRefreshToken_Expired() {
+        when(userDetailsService.refreshAccessToken(any(String.class)))
+                .thenReturn(Mono.error(new RefreshTokenExpiredException()));
+
+        webTestClient.post().uri("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(refreshTokenRequestDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody(String.class)
+                .value(response -> assertEquals("Refresh token expired. Please login.", response));
+    }
+
+    @Test
+    void testRefreshToken_InvalidAccessToken() {
+        when(userDetailsService.refreshAccessToken(any(String.class)))
+                .thenReturn(Mono.error(new InvalidTokenException()));
+
+        webTestClient.post().uri("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(refreshTokenRequestDto)
+                .exchange()
+                .expectStatus().is4xxClientError()
+                .expectBody(String.class)
+                .value(response -> assertEquals("Token is invalid!", response));
     }
 }

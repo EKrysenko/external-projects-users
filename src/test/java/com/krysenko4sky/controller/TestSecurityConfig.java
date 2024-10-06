@@ -1,5 +1,6 @@
 package com.krysenko4sky.controller;
 
+import com.krysenko4sky.auth.service.TokenProvider;
 import com.krysenko4sky.service.TokenValidator;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -13,6 +14,11 @@ public class TestSecurityConfig {
     @Bean
     public TokenValidator mockTokenValidator() {
         return Mockito.mock(TokenValidator.class);
+    }
+
+    @Bean
+    public TokenProvider mockTokenProvider() {
+        return Mockito.mock(TokenProvider.class);
     }
 
     @Bean

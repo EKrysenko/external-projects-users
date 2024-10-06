@@ -1,7 +1,7 @@
 package com.krysenko4sky.controller.exceptionhandler;
 
+import com.krysenko4sky.exception.AuthenticationException;
 import com.krysenko4sky.exception.EntityNotFoundException;
-import com.krysenko4sky.exception.InvalidTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -20,8 +20,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<String> handleInvalidTokenExceptions(InvalidTokenException ex) {
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<String> handleAuthenticationExceptions(AuthenticationException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 

@@ -41,15 +41,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         String login = dto.getLogin();
         return userDetailsRepository.findByEmail(login)
                 .flatMap(existingUser -> {
+                    log.error("User exists");
                     String message = "User with email " + login + " already exists";
                     return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(message));
                 })
-                .switchIfEmpty(
+                .switchIfEmpty(Mono.defer(() ->
                         userDetailsRepository.save(UserDetails.builder()
                                         .email(login)
                                         .password(passwordService.hashPassword(dto.getPassword()))
                                         .build())
-                                .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build()))
+                                .then(Mono.just(ResponseEntity.status(HttpStatus.CREATED).build())))
                 );
     }
 
