@@ -1,0 +1,5 @@
+spring:
+  liquibase:
+    enabled: false
+
+secret: test_secret
