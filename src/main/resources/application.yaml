@@ -17,12 +17,22 @@ spring:
         default-context: jwt-signing
   config:
     import: optional:vault://
-
   doc:
     api-docs:
       path: /v3/api-docs
     swagger-ui:
       path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
 
 logging:
   level:
