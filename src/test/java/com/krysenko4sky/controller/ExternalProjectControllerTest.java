@@ -32,9 +32,10 @@ class ExternalProjectControllerTest {
 
     @Test
     void createExternalProject() {
-        ExternalProjectDto projectDto = new ExternalProjectDto();
-        projectDto.setId(UUID.randomUUID());
-        projectDto.setName("Test Project");
+        ExternalProjectDto projectDto = ExternalProjectDto.builder()
+                .id(UUID.randomUUID())
+                .name("Test Project")
+                .build();
 
         when(externalProjectService.createExternalProject(any())).thenReturn(Mono.just(projectDto));
 
@@ -53,9 +54,10 @@ class ExternalProjectControllerTest {
     @Test
     void getExternalProjectById() {
         UUID projectId = UUID.randomUUID();
-        ExternalProjectDto projectDto = new ExternalProjectDto();
-        projectDto.setId(projectId);
-        projectDto.setName("Test Project");
+        ExternalProjectDto projectDto = ExternalProjectDto.builder()
+                .id(projectId)
+                .name("Test Project")
+                .build();
 
         when(externalProjectService.getExternalProjectById(projectId)).thenReturn(Mono.just(projectDto));
 
@@ -73,9 +75,10 @@ class ExternalProjectControllerTest {
     @Test
     void updateExternalProject() {
         UUID projectId = UUID.randomUUID();
-        ExternalProjectDto projectDto = new ExternalProjectDto();
-        projectDto.setId(projectId);
-        projectDto.setName("Updated Project");
+        ExternalProjectDto projectDto = ExternalProjectDto.builder()
+                .id(projectId)
+                .name("Updated Project")
+                .build();
 
         when(externalProjectService.updateExternalProject(eq(projectId), any())).thenReturn(Mono.just(projectDto));
 
@@ -108,9 +111,11 @@ class ExternalProjectControllerTest {
     @Test
     void getExternalProjectsByUserId() {
         UUID userId = UUID.randomUUID();
-        ExternalProjectDto projectDto = new ExternalProjectDto();
-        projectDto.setId(UUID.randomUUID());
-        projectDto.setName("User Project");
+        UUID projectId = UUID.randomUUID();
+        ExternalProjectDto projectDto = ExternalProjectDto.builder()
+                .id(projectId)
+                .name("User Project")
+                .build();
 
         when(externalProjectService.getExternalProjectsByUserId(userId)).thenReturn(Flux.just(projectDto));
 
@@ -127,9 +132,10 @@ class ExternalProjectControllerTest {
 
     @Test
     void getAllProjects() {
-        ExternalProjectDto projectDto = new ExternalProjectDto();
-        projectDto.setId(UUID.randomUUID());
-        projectDto.setName("All Projects");
+        ExternalProjectDto projectDto = ExternalProjectDto.builder()
+                .id(UUID.randomUUID())
+                .name("All Projects")
+                .build();
 
         when(externalProjectService.getAllExternalProjects()).thenReturn(Flux.just(projectDto));
 
