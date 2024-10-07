@@ -2,6 +2,7 @@ package com.krysenko4sky.service.impl;
 
 import com.google.common.base.Preconditions;
 import com.krysenko4sky.exception.UserNotFoundException;
+import com.krysenko4sky.logging.LogArguments;
 import com.krysenko4sky.mapper.UserMapper;
 import com.krysenko4sky.model.dao.User;
 import com.krysenko4sky.model.dto.UserDto;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @Service
+@LogArguments
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
