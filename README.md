@@ -4,6 +4,9 @@
 ## Pre-requisites:
 - docker, docker-compose, jre 21
 
+## How to run:
+```docker-compose up --build```
+
 ## External services:
 - vault: 
   - url: http://localhost:8200/ui
