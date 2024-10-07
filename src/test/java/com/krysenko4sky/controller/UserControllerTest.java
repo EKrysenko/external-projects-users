@@ -1,5 +1,6 @@
 package com.krysenko4sky.controller;
 
+import com.krysenko4sky.exception.UserNotFoundException;
 import com.krysenko4sky.model.dto.UserDto;
 import com.krysenko4sky.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -34,7 +36,7 @@ class UserControllerTest {
     private final UserDto userDto = UserDto.builder().username(username).id(userId).build();
 
     @Test
-    void testCreateUser() {
+    void canCreateUser() {
         when(userService.createUser(any(UserDto.class))).thenReturn(Mono.just(userDto));
         webTestClient.post().uri(UserController.USERS)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -51,7 +53,16 @@ class UserControllerTest {
     }
 
     @Test
-    void testGetUserById() {
+    void createUser_FailOnEmptyUsername() {
+        webTestClient.post().uri(UserController.USERS)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"username\": \"\"}")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void canGetUserById() {
         when(userService.getUserById(eq(userId))).thenReturn(Mono.just(userDto));
         webTestClient.get().uri(UserController.USERS + "/{id}", userId)
                 .exchange()
@@ -66,7 +77,19 @@ class UserControllerTest {
     }
 
     @Test
-    void testUpdateUser() {
+    void getUserById_FailOnUserNotFound() {
+        when(userService.getUserById(eq(userId))).thenReturn(Mono.error(new UserNotFoundException(userId.toString())));
+
+        webTestClient.get().uri(UserController.USERS + "/{id}", userId)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(String.class)
+                .value(response -> assertEquals("User with login: '" + userId + "' not exist.", response));
+        Mockito.verify(userService).getUserById(eq(userId));
+    }
+
+    @Test
+    void canUpdateUser() {
         when(userService.updateUser(eq(userId), any(UserDto.class))).thenReturn(Mono.just(userDto));
         webTestClient.put().uri(UserController.USERS + "/{id}", userId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -83,7 +106,20 @@ class UserControllerTest {
     }
 
     @Test
-    void testDeleteUser() {
+    void updateUser_FailOnUserNotFound() {
+        when(userService.updateUser(eq(userId), any(UserDto.class))).thenReturn(Mono.error(new UserNotFoundException(username)));
+
+        webTestClient.put().uri(UserController.USERS + "/{id}", userId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"username\": \"New Test User\"}")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(String.class)
+                .value(response -> assertEquals("User with login: '" + username + "' not exist.", response));
+    }
+
+    @Test
+    void canDeleteUser() {
         UUID userId = UUID.randomUUID();
         when(userService.deleteUser(eq(userId))).thenReturn(Mono.empty());
         webTestClient.delete().uri(UserController.USERS + "/{id}", userId)
@@ -93,8 +129,7 @@ class UserControllerTest {
     }
 
     @Test
-    void testGetAllUsers() {
-
+    void canGetAllUsers() {
         when(userService.getAllUsers()).thenReturn(Flux.just(userDto));
 
         webTestClient.get().uri("/users")

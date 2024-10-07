@@ -12,8 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -50,7 +52,7 @@ class ExternalProjectServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        try (AutoCloseable autoCloseable = openMocks(this)) {
+        try (AutoCloseable ignored = openMocks(this)) {
             projectId = UUID.randomUUID();
             userId = UUID.randomUUID();
             projectDto = ExternalProjectDto.builder()
@@ -104,7 +106,7 @@ class ExternalProjectServiceImplTest {
         when(externalProjectRepository.findById(projectId)).thenReturn(Mono.empty());
 
         Mono<ExternalProjectDto> result = externalProjectService.getExternalProjectById(projectId);
-        assertTrue(result.blockOptional().isEmpty());
+        assertThrows(ProjectNotFoundException.class, result::blockOptional);
         verify(externalProjectRepository, times(1)).findById(projectId);
     }
 
@@ -118,18 +120,6 @@ class ExternalProjectServiceImplTest {
 
         verify(externalProjectRepository, times(1)).findById(projectId);
         verify(userRepository, times(1)).findById(userId);
-    }
-
-    @Test
-    void updateExternalProject_UserNotFound() {
-        when(userRepository.findById(userId)).thenReturn(Mono.empty());
-        when(externalProjectRepository.findById(projectId)).thenReturn(Mono.just(project));
-
-        assertThrows(UserNotFoundException.class,
-                () -> externalProjectService.updateExternalProject(projectId, projectDto).block());
-
-        verify(userRepository, times(1)).findById(userId);
-        verify(externalProjectRepository, times(1)).findById(projectId);
     }
 
     @Test
@@ -153,12 +143,90 @@ class ExternalProjectServiceImplTest {
     }
 
     @Test
+    void updateExternalProject_FailedOnIdMismatch() {
+        UUID pathId = UUID.randomUUID();
+        UUID dtoId = UUID.randomUUID();
+        projectDto.setId(dtoId);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> externalProjectService.updateExternalProject(pathId, projectDto).block());
+
+        assertEquals("id in path and in dto must be the same", exception.getMessage());
+    }
+
+    @Test
+    void updateExternalProject_RevokeProjectFromUser() {
+        projectDto.setUserId(null);
+        when(externalProjectRepository.findById(projectId)).thenReturn(Mono.just(project));
+        when(externalProjectMapper.toDao(any(ExternalProjectDto.class))).thenReturn(project);
+        when(externalProjectRepository.save(any(ExternalProject.class))).thenReturn(Mono.just(project));
+        when(externalProjectMapper.toDto(any(ExternalProject.class))).thenReturn(projectDto);
+
+        Mono<ExternalProjectDto> result = externalProjectService.updateExternalProject(projectId, projectDto);
+
+        assertNotNull(result);
+        ExternalProjectDto resultDto = result.block();
+        assertNotNull(resultDto);
+        assertEquals(projectDto, resultDto);
+
+        verify(userRepository, times(0)).findById(any(UUID.class));
+
+        verify(externalProjectRepository, times(1)).findById(projectId);
+        verify(externalProjectRepository, times(1)).save(any(ExternalProject.class));
+        verify(externalProjectMapper, times(1)).toDto(any(ExternalProject.class));
+    }
+
+    @Test
+    void updateExternalProject_UserNotFound() {
+        when(userRepository.findById(userId)).thenReturn(Mono.empty());
+        when(externalProjectRepository.findById(projectId)).thenReturn(Mono.just(project));
+
+        assertThrows(UserNotFoundException.class,
+                () -> externalProjectService.updateExternalProject(projectId, projectDto).block());
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(externalProjectRepository, times(1)).findById(projectId);
+    }
+
+    @Test
     void deleteExternalProject_Success() {
         when(externalProjectRepository.deleteById(projectId)).thenReturn(Mono.empty());
 
         Mono<Void> result = externalProjectService.deleteExternalProject(projectId);
 
-        assertDoesNotThrow(() -> result.block());
+        assertThrows(ProjectNotFoundException.class, result::blockOptional);
         verify(externalProjectRepository, times(1)).deleteById(projectId);
+    }
+
+    @Test
+    void getExternalProjectsByUserId_Success() {
+        when(externalProjectRepository.findByUserId(userId)).thenReturn(Flux.just(project));
+        when(externalProjectMapper.toDto(any(ExternalProject.class))).thenReturn(projectDto);
+
+        Flux<ExternalProjectDto> result = externalProjectService.getExternalProjectsByUserId(userId);
+
+        List<ExternalProjectDto> resultList = result.collectList().block();
+        assertNotNull(resultList);
+        assertEquals(1, resultList.size());
+        assertEquals(projectDto, resultList.getFirst());
+
+        verify(externalProjectRepository, times(1)).findByUserId(userId);
+        verify(externalProjectMapper, times(1)).toDto(any(ExternalProject.class));
+    }
+
+    @Test
+    void getAllExternalProjects_Success() {
+        when(externalProjectRepository.findAll()).thenReturn(Flux.just(project));
+        when(externalProjectMapper.toDto(any(ExternalProject.class))).thenReturn(projectDto);
+
+        Flux<ExternalProjectDto> result = externalProjectService.getAllExternalProjects();
+
+        List<ExternalProjectDto> resultList = result.collectList().block();
+        assertNotNull(resultList);
+        assertEquals(1, resultList.size());
+        assertEquals(projectDto, resultList.getFirst());
+
+        verify(externalProjectRepository, times(1)).findAll();
+        verify(externalProjectMapper, times(1)).toDto(any(ExternalProject.class));
     }
 }

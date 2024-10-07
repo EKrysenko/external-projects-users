@@ -21,7 +21,7 @@ class PasswordServiceImplTest {
     }
 
     @Test
-    void testHashPassword() {
+    void canHashPassword() {
         String plainPassword = "password123";
         String hashedPassword = "$2a$10$abcdefghijklmnopqrstuv";
         Mockito.when(encoder.encode(plainPassword)).thenReturn(hashedPassword);
@@ -31,7 +31,7 @@ class PasswordServiceImplTest {
     }
 
     @Test
-    void testIsPasswordCorrect_WithCorrectPassword() {
+    void testPasswordCorrect() {
         String plainPassword = "password123";
         String hashedPassword = "$2a$10$abcdefghijklmnopqrstuv";
         Mockito.when(encoder.matches(plainPassword, hashedPassword)).thenReturn(true);
@@ -41,7 +41,7 @@ class PasswordServiceImplTest {
     }
 
     @Test
-    void testIsPasswordCorrect_WithIncorrectPassword() {
+    void testPasswordIncorrect() {
         String plainPassword = "wrongPassword";
         String hashedPassword = "$2a$10$abcdefghijklmnopqrstuv";
         Mockito.when(encoder.matches(plainPassword, hashedPassword)).thenReturn(false);

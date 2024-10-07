@@ -5,14 +5,16 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,12 +27,9 @@ class JwtTokenValidatorTest {
 
     private JwtTokenValidator jwtTokenValidator;
 
-    @Mock
-    private SecretKey secretKey;
-
     @BeforeEach
     void setUp() {
-        try (AutoCloseable autoCloseable = openMocks(this)) {
+        try (AutoCloseable ignored = openMocks(this)) {
             jwtTokenValidator = new JwtTokenValidator();
             String secret = "z1lun9qbiBW3Hy6bVVdjpa3iK23ZjjApOMaXIVb0OZw=";
             ReflectionTestUtils.setField(jwtTokenValidator, "jwtSigningSecret", secret);
@@ -148,5 +147,21 @@ class JwtTokenValidatorTest {
         String invalidToken = "invalidToken";
 
         assertThrows(InvalidTokenException.class, () -> jwtTokenValidator.extractAllClaims(invalidToken));
+    }
+
+    @Test
+    void canThrowOnExtractAllClaims_WithSignatureException() {
+        String tokenWithInvalidSignature = Jwts.builder()
+                .subject("testUser")
+                .expiration(new Date(System.currentTimeMillis() + 10000))
+                .signWith(createFakeSignature())
+                .compact();
+
+        assertThrows(InvalidTokenException.class, () -> jwtTokenValidator.extractAllClaims(tokenWithInvalidSignature));
+    }
+
+    private Key createFakeSignature() {
+        byte[] keyBytes = UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8);
+        return new SecretKeySpec(keyBytes, 0, keyBytes.length, "HmacSHA256");
     }
 }

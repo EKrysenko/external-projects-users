@@ -1,5 +1,6 @@
 package com.krysenko4sky.controller;
 
+import com.krysenko4sky.logging.LogArguments;
 import com.krysenko4sky.model.dto.UserDto;
 import com.krysenko4sky.service.UserService;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RestController
 @Validated
 @Slf4j
+@LogArguments
 @RequestMapping(UserController.USERS)
 public class UserController {
     public static final String USERS = "/users";
@@ -84,6 +86,6 @@ public class UserController {
     }
 
     private static void logMethodInvoked(String path, String method) {
-        log.debug(LOG_PATTERN, path, method);
+        log.info(LOG_PATTERN, path, method);
     }
 }

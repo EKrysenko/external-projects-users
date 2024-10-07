@@ -21,6 +21,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) {
         return http
                 .authorizeExchange(exchanges -> exchanges
+                        .pathMatchers("/actuator/prometheus", "/actuator/health", "/actuator/info").permitAll()
                         .pathMatchers("/webjars/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .pathMatchers("auth/login", "auth/register", "auth/refresh").permitAll()
                         .anyExchange().authenticated()

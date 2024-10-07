@@ -1,5 +1,6 @@
 package com.krysenko4sky.controller;
 
+import com.krysenko4sky.logging.LogArguments;
 import com.krysenko4sky.model.dto.ExternalProjectDto;
 import com.krysenko4sky.service.ExternalProjectService;
 import jakarta.validation.Valid;
@@ -27,6 +28,7 @@ import static com.krysenko4sky.controller.UserController.LOG_PATTERN;
 @RestController
 @Validated
 @Slf4j
+@LogArguments
 @RequestMapping(ExternalProjectController.PROJECTS)
 public class ExternalProjectController {
 
@@ -91,6 +93,6 @@ public class ExternalProjectController {
     }
 
     private static void logMethodInvoked(String path, String method) {
-        log.debug(LOG_PATTERN, path, method);
+        log.info(LOG_PATTERN, path, method);
     }
 }

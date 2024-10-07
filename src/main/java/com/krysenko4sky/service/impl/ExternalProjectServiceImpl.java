@@ -3,6 +3,7 @@ package com.krysenko4sky.service.impl;
 import com.google.common.base.Preconditions;
 import com.krysenko4sky.exception.ProjectNotFoundException;
 import com.krysenko4sky.exception.UserNotFoundException;
+import com.krysenko4sky.logging.LogArguments;
 import com.krysenko4sky.mapper.ExternalProjectMapper;
 import com.krysenko4sky.model.dto.ExternalProjectDto;
 import com.krysenko4sky.repository.ExternalProjectRepository;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @Service
+@LogArguments
 public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     private final ExternalProjectRepository externalProjectRepository;
@@ -39,7 +41,9 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     @Override
     public Mono<ExternalProjectDto> getExternalProjectById(UUID id) {
-        return externalProjectRepository.findById(id).map(externalProjectMapper::toDto);
+        return externalProjectRepository.findById(id)
+                .map(externalProjectMapper::toDto)
+                .switchIfEmpty(Mono.error(new ProjectNotFoundException(id)));
     }
 
     @Override
@@ -62,7 +66,8 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     @Override
     public Mono<Void> deleteExternalProject(UUID id) {
-        return externalProjectRepository.deleteById(id);
+        return externalProjectRepository.deleteById(id)
+                .switchIfEmpty(Mono.error(new ProjectNotFoundException(id)));
     }
 
     @Override
