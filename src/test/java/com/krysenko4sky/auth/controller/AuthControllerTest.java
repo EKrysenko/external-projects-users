@@ -118,7 +118,7 @@ class AuthControllerTest {
             "onlylowercase1!",
             "ONLYUPPERCASE1!",
     })
-    void testRegisterUser_PasswordValidation(String password) {
+    void testRegisterUser_FailOnInvalidPassword(String password) {
         registerUserRequestDto.setPassword(password);
 
         webTestClient.post().uri("/auth/register")
@@ -129,7 +129,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testRegisterUser_InvalidEmail() {
+    void testRegisterUser_FailOnInvalidEmail() {
         registerUserRequestDto.setLogin("invalid-email");
 
         webTestClient.post().uri("/auth/register")
@@ -140,7 +140,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testLogin_IncorrectPassword() {
+    void testLogin_FailOnIncorrectPassword() {
         when(userDetailsService.login(any(AuthRequestDto.class)))
                 .thenReturn(Mono.error(new IncorrectPasswordException()));
 
@@ -154,7 +154,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testLogin_UserNotFound() {
+    void testLogin_FailOnUserNotFound() {
         when(userDetailsService.login(any(AuthRequestDto.class)))
                 .thenReturn(Mono.error(new UserNotFoundException(authRequestDto.getLogin())));
 
@@ -168,7 +168,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testRefreshToken_Expired() {
+    void testRefreshToken_FailOnRefreshTokenExpired() {
         when(userDetailsService.refreshAccessToken(any(String.class)))
                 .thenReturn(Mono.error(new RefreshTokenExpiredException()));
 
@@ -182,7 +182,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void testRefreshToken_InvalidAccessToken() {
+    void testRefreshToken_FailOnInvalidAccessToken() {
         when(userDetailsService.refreshAccessToken(any(String.class)))
                 .thenReturn(Mono.error(new InvalidTokenException()));
 

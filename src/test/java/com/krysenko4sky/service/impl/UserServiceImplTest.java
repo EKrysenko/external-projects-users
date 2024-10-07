@@ -47,7 +47,7 @@ class UserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        try (AutoCloseable autoCloseable = openMocks(this)) {
+        try (AutoCloseable ignored = openMocks(this)) {
             userId = UUID.randomUUID();
             userDto = UserDto.builder()
                     .id(userId)
@@ -124,6 +124,18 @@ class UserServiceImplTest {
 
         verify(userRepository, times(1)).findById(userId);
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateUser_FailedOnIdMismatch() {
+        UUID pathId = UUID.randomUUID();
+        UUID dtoId = UUID.randomUUID();
+        userDto.setId(dtoId);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.updateUser(pathId, userDto).block());
+
+        assertEquals("id in path and in dto must be the same", exception.getMessage());
     }
 
     @Test

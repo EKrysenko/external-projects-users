@@ -4,10 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.crypto.SecretKey;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,12 +16,9 @@ class JwtTokenProviderTest {
 
     private JwtTokenProvider jwtTokenProvider;
 
-    @Mock
-    private SecretKey secretKey;
-
     @BeforeEach
     void setUp() {
-        try (AutoCloseable autoCloseable = openMocks(this)) {
+        try (AutoCloseable ignored = openMocks(this)) {
             jwtTokenProvider = new JwtTokenProvider();
             String secret = "z1lun9qbiBW3Hy6bVVdjpa3iK23ZjjApOMaXIVb0OZw=";
             ReflectionTestUtils.setField(jwtTokenProvider, "jwtSigningSecret", secret);
@@ -57,7 +52,7 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    void generatedTokenIsNotExpiredImmediately() {
+    void generatedTokenIsValidFor9hours() {
         String login = "testUser";
         String token = jwtTokenProvider.generateToken(login);
         Claims claims = (Claims) Jwts.parser().verifyWith(jwtTokenProvider.getSecretKey()).build().parse(token).getPayload();
@@ -67,7 +62,7 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    void generatedRefreshTokenIsValid() {
+    void generatedRefreshTokenIsValidFor23hours() {
         String login = "testUser";
         String refreshToken = jwtTokenProvider.generateRefreshToken(login);
         Claims claims = (Claims) Jwts.parser().verifyWith(jwtTokenProvider.getSecretKey()).build().parse(refreshToken).getPayload();
