@@ -106,7 +106,7 @@ class ExternalProjectServiceImplTest {
         when(externalProjectRepository.findById(projectId)).thenReturn(Mono.empty());
 
         Mono<ExternalProjectDto> result = externalProjectService.getExternalProjectById(projectId);
-        assertTrue(result.blockOptional().isEmpty());
+        assertThrows(ProjectNotFoundException.class, result::blockOptional);
         verify(externalProjectRepository, times(1)).findById(projectId);
     }
 
@@ -175,6 +175,7 @@ class ExternalProjectServiceImplTest {
         verify(externalProjectRepository, times(1)).save(any(ExternalProject.class));
         verify(externalProjectMapper, times(1)).toDto(any(ExternalProject.class));
     }
+
     @Test
     void updateExternalProject_UserNotFound() {
         when(userRepository.findById(userId)).thenReturn(Mono.empty());
@@ -193,7 +194,7 @@ class ExternalProjectServiceImplTest {
 
         Mono<Void> result = externalProjectService.deleteExternalProject(projectId);
 
-        assertDoesNotThrow(() -> result.block());
+        assertThrows(ProjectNotFoundException.class, result::blockOptional);
         verify(externalProjectRepository, times(1)).deleteById(projectId);
     }
 

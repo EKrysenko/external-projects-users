@@ -1,6 +1,7 @@
 package com.krysenko4sky.service.impl;
 
 import com.google.common.base.Preconditions;
+import com.krysenko4sky.exception.ProjectNotFoundException;
 import com.krysenko4sky.exception.UserNotFoundException;
 import com.krysenko4sky.logging.LogArguments;
 import com.krysenko4sky.mapper.UserMapper;
@@ -40,7 +41,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<UserDto> getUserById(UUID id) {
-        return userRepository.findById(id).map(userMapper::toDto);
+        return userRepository.findById(id).map(userMapper::toDto)
+                .switchIfEmpty(Mono.error(new UserNotFoundException(id)));
     }
 
     @Override
@@ -58,8 +60,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<Void> deleteUser(UUID id) {
         return externalProjectRepository.findByUserId(id)
-                .flatMap(project -> externalProjectRepository.deleteById(project.getId()))
-                .then(userRepository.deleteById(id));
+                .flatMap(project -> {
+                    project.setUserId(null);
+                    return externalProjectRepository.save(project);
+                })
+                .then(userRepository.deleteById(id))
+                .switchIfEmpty(Mono.error(new UserNotFoundException(id)));
     }
 
     @Override

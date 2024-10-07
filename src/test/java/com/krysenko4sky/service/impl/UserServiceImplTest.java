@@ -97,7 +97,7 @@ class UserServiceImplTest {
 
         Mono<UserDto> result = userService.getUserById(userId);
 
-        assertTrue(result.blockOptional().isEmpty());
+        assertThrows(UserNotFoundException.class, result::blockOptional);
         verify(userRepository, times(1)).findById(userId);
     }
 
@@ -145,7 +145,7 @@ class UserServiceImplTest {
 
         Mono<Void> result = userService.deleteUser(userId);
 
-        assertDoesNotThrow(() -> result.block());
+        assertThrows(UserNotFoundException.class, result::block);
         verify(externalProjectRepository, times(1)).findByUserId(userId);
         verify(userRepository, times(1)).deleteById(userId);
     }

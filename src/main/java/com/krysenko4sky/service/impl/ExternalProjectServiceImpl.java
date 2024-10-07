@@ -41,7 +41,9 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     @Override
     public Mono<ExternalProjectDto> getExternalProjectById(UUID id) {
-        return externalProjectRepository.findById(id).map(externalProjectMapper::toDto);
+        return externalProjectRepository.findById(id)
+                .map(externalProjectMapper::toDto)
+                .switchIfEmpty(Mono.error(new ProjectNotFoundException(id)));
     }
 
     @Override
@@ -64,7 +66,8 @@ public class ExternalProjectServiceImpl implements ExternalProjectService {
 
     @Override
     public Mono<Void> deleteExternalProject(UUID id) {
-        return externalProjectRepository.deleteById(id);
+        return externalProjectRepository.deleteById(id)
+                .switchIfEmpty(Mono.error(new ProjectNotFoundException(id)));
     }
 
     @Override
