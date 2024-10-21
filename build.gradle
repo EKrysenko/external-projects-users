@@ -30,7 +30,7 @@ repositories {
 ext {
     // dependency versions
     springBootVersion = '3.3.4'
-    projectreactorVersion = '3.6.10'
+    projectreactorVersion = '3.6.11'
     lombokVersion = '1.18.34'
     mockitoVersion = '5.14.1'
 }
