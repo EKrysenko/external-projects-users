@@ -32,7 +32,7 @@ ext {
     springBootVersion = '3.3.4'
     projectreactorVersion = '3.6.10'
     lombokVersion = '1.18.34'
-    mockitoVersion = '5.14.1'
+    mockitoVersion = '5.14.2'
 }
 
 
