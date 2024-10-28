@@ -44,7 +44,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
-    implementation 'ch.qos.logback:logback-classic:1.5.10'
+    implementation 'ch.qos.logback:logback-classic:1.5.12'
     implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-vault-config:4.1.3'
